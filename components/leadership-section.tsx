@@ -29,7 +29,7 @@ const Leader = ({ name, role, imageUrl, description }: LeaderProps) => {
 export default function LeadershipSection() {
   // Replace these URLs with actual image URLs
   const leaderImageUrl = "https://i.pinimg.com/736x/e9/39/27/e939270303cebaa9a1d459cfb2996240.jpg"
-  const coLeaderImageUrl = "/placeholder.svg?height=400&width=400"
+  const coLeaderImageUrl = "https://i.pinimg.com/736x/5c/ea/d7/5cead7ce0167bd143cd5a489575afa4e.jpg"
 
   return (
     <section className="w-full max-w-4xl mx-auto mt-16 px-4">
