@@ -4,13 +4,14 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { useApplicationStatus } from "@/context/application-status-context"
-import { Shield, LogOut } from "lucide-react"
+import { Shield, LogOut, RefreshCw } from "lucide-react"
 
 export default function AdminPage() {
   const router = useRouter()
-  const { isApplicationOpen, setApplicationOpen } = useApplicationStatus()
+  const { isApplicationOpen, setApplicationOpen, lastUpdated, isLoading } = useApplicationStatus()
   const [isAuthorized, setIsAuthorized] = useState(false)
   const [adminUser, setAdminUser] = useState("")
+  const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
     // Check if user is authorized via both code and admin auth
@@ -28,6 +29,26 @@ export default function AdminPage() {
 
   const toggleApplicationStatus = () => {
     setApplicationOpen(!isApplicationOpen)
+  }
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "Unknown"
+    const date = new Date(dateString)
+    return date.toLocaleString()
+  }
+
+  const manualRefresh = async () => {
+    setRefreshing(true)
+    try {
+      const response = await fetch("/api/application-status")
+      if (response.ok) {
+        window.location.reload()
+      }
+    } catch (error) {
+      console.error("Error refreshing status:", error)
+    } finally {
+      setRefreshing(false)
+    }
   }
 
   const logout = () => {
@@ -77,19 +98,34 @@ export default function AdminPage() {
 
         <div className="space-y-8">
           <section className="p-6 border border-blue-900 rounded-lg">
-            <h2 className="text-2xl font-semibold text-blue-400 mb-4">Application Status</h2>
+            <div className="flex justify-between items-start mb-4">
+              <h2 className="text-2xl font-semibold text-blue-400">Application Status</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1"
+                onClick={manualRefresh}
+                disabled={refreshing}
+              >
+                <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
+                Refresh
+              </Button>
+            </div>
+
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-300 mb-2">Current Status:</p>
                 <p className={`text-xl font-bold ${isApplicationOpen ? "text-green-500" : "text-red-500"}`}>
                   {isApplicationOpen ? "OPEN" : "CLOSED"}
                 </p>
+                <p className="text-xs text-gray-400 mt-1">Last updated: {formatDate(lastUpdated)}</p>
               </div>
               <Button
                 onClick={toggleApplicationStatus}
                 className={isApplicationOpen ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
+                disabled={isLoading}
               >
-                {isApplicationOpen ? "Close Applications" : "Open Applications"}
+                {isLoading ? "Updating..." : isApplicationOpen ? "Close Applications" : "Open Applications"}
               </Button>
             </div>
           </section>

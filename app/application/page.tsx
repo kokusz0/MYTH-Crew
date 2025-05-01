@@ -14,15 +14,16 @@ import { Toaster } from "@/components/ui/toaster"
 import AnimatedStarsBackground from "@/components/animated-stars-background"
 import { useApplicationStatus } from "@/context/application-status-context"
 import { useRouter } from "next/navigation"
+import { Loader2 } from "lucide-react"
 
 export default function ApplicationPage() {
   const router = useRouter()
-  const { isApplicationOpen } = useApplicationStatus()
+  const { isApplicationOpen, isLoading } = useApplicationStatus()
   const [step, setStep] = useState(1)
   const totalSteps = 3
   const progress = (step / totalSteps) * 100
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const [pageLoading, setPageLoading] = useState(true)
 
   const [formData, setFormData] = useState({
     inGameName: "",
@@ -38,11 +39,13 @@ export default function ApplicationPage() {
 
   // Check if applications are open
   useEffect(() => {
-    setIsLoading(false)
-    if (!isApplicationOpen) {
-      router.push("/")
+    if (!isLoading) {
+      setPageLoading(false)
+      if (!isApplicationOpen) {
+        router.push("/")
+      }
     }
-  }, [isApplicationOpen, router])
+  }, [isApplicationOpen, isLoading, router])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -68,7 +71,23 @@ export default function ApplicationPage() {
   }
 
   const submitApplication = async () => {
+    // Check if applications are still open before submitting
     try {
+      const statusCheck = await fetch("/api/application-status")
+      const statusData = await statusCheck.json()
+
+      if (!statusData.isOpen) {
+        toast({
+          title: "Applications Closed",
+          description: "Sorry, applications are currently closed. Please try again later.",
+          variant: "destructive",
+        })
+        setTimeout(() => {
+          router.push("/")
+        }, 3000)
+        return
+      }
+
       setIsSubmitting(true)
 
       // Submit to our API route instead of directly to Discord
@@ -106,10 +125,13 @@ export default function ApplicationPage() {
     }
   }
 
-  if (isLoading) {
+  if (pageLoading || isLoading) {
     return (
       <main className="min-h-[calc(100vh-73px)] flex items-center justify-center">
-        <div className="text-blue-400 text-xl">Loading...</div>
+        <div className="flex items-center gap-2 text-blue-400 text-xl">
+          <Loader2 className="animate-spin" size={24} />
+          <span>Loading...</span>
+        </div>
       </main>
     )
   }
