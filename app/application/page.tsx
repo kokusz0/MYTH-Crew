@@ -18,7 +18,7 @@ import { Loader2 } from "lucide-react"
 
 export default function ApplicationPage() {
   const router = useRouter()
-  const { isApplicationOpen, isLoading } = useApplicationStatus()
+  const { regularStatus, isLoading } = useApplicationStatus()
   const [step, setStep] = useState(1)
   const totalSteps = 3
   const progress = (step / totalSteps) * 100
@@ -41,11 +41,11 @@ export default function ApplicationPage() {
   useEffect(() => {
     if (!isLoading) {
       setPageLoading(false)
-      if (!isApplicationOpen) {
+      if (!regularStatus.isOpen) {
         router.push("/")
       }
     }
-  }, [isApplicationOpen, isLoading, router])
+  }, [regularStatus.isOpen, isLoading, router])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -76,7 +76,7 @@ export default function ApplicationPage() {
       const statusCheck = await fetch("/api/application-status")
       const statusData = await statusCheck.json()
 
-      if (!statusData.isOpen) {
+      if (!statusData.regular.isOpen) {
         toast({
           title: "Applications Closed",
           description: "Sorry, applications are currently closed. Please try again later.",
@@ -136,7 +136,7 @@ export default function ApplicationPage() {
     )
   }
 
-  if (!isApplicationOpen) {
+  if (!regularStatus.isOpen) {
     return null // This will never render as we redirect in useEffect
   }
 

@@ -3,19 +3,31 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { toast } from "@/components/ui/use-toast"
 
-type ApplicationStatusContextType = {
-  isApplicationOpen: boolean
-  setApplicationOpen: (isOpen: boolean) => void
+type ApplicationType = "regular" | "moderator"
+
+type ApplicationStatusState = {
+  isOpen: boolean
   lastUpdated: string | null
+}
+
+type ApplicationStatusContextType = {
+  regularStatus: ApplicationStatusState
+  moderatorStatus: ApplicationStatusState
+  setApplicationStatus: (type: ApplicationType, isOpen: boolean) => Promise<void>
   isLoading: boolean
   refreshStatus: () => Promise<void>
+}
+
+const defaultStatus: ApplicationStatusState = {
+  isOpen: true,
+  lastUpdated: null,
 }
 
 const ApplicationStatusContext = createContext<ApplicationStatusContextType | undefined>(undefined)
 
 export function ApplicationStatusProvider({ children }: { children: ReactNode }) {
-  const [isApplicationOpen, setIsApplicationOpen] = useState(true)
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null)
+  const [regularStatus, setRegularStatus] = useState<ApplicationStatusState>(defaultStatus)
+  const [moderatorStatus, setModeratorStatus] = useState<ApplicationStatusState>(defaultStatus)
   const [isLoading, setIsLoading] = useState(true)
 
   // Function to fetch the current status from the API
@@ -25,8 +37,14 @@ export function ApplicationStatusProvider({ children }: { children: ReactNode })
       const response = await fetch("/api/application-status")
       if (response.ok) {
         const data = await response.json()
-        setIsApplicationOpen(data.isOpen)
-        setLastUpdated(data.lastUpdated)
+        setRegularStatus({
+          isOpen: data.regular.isOpen,
+          lastUpdated: data.regular.lastUpdated,
+        })
+        setModeratorStatus({
+          isOpen: data.moderator.isOpen,
+          lastUpdated: data.moderator.lastUpdated,
+        })
       } else {
         console.error("Failed to fetch application status:", await response.text())
       }
@@ -57,7 +75,7 @@ export function ApplicationStatusProvider({ children }: { children: ReactNode })
   }, [])
 
   // Function to update the status via API
-  const setApplicationOpen = async (isOpen: boolean) => {
+  const setApplicationStatus = async (type: ApplicationType, isOpen: boolean) => {
     try {
       setIsLoading(true)
       const response = await fetch("/api/application-status", {
@@ -65,28 +83,39 @@ export function ApplicationStatusProvider({ children }: { children: ReactNode })
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ isOpen }),
+        body: JSON.stringify({ type, isOpen }),
       })
 
       if (response.ok) {
         const data = await response.json()
-        setIsApplicationOpen(data.isOpen)
-        setLastUpdated(data.lastUpdated)
+
+        if (type === "regular") {
+          setRegularStatus({
+            isOpen: data.regular.isOpen,
+            lastUpdated: data.regular.lastUpdated,
+          })
+        } else {
+          setModeratorStatus({
+            isOpen: data.moderator.isOpen,
+            lastUpdated: data.moderator.lastUpdated,
+          })
+        }
+
         toast({
           title: "Status Updated",
-          description: `Applications are now ${isOpen ? "open" : "closed"}.`,
+          description: `${type.charAt(0).toUpperCase() + type.slice(1)} applications are now ${isOpen ? "open" : "closed"}.`,
         })
       } else {
         const errorText = await response.text()
-        console.error("Failed to update application status:", errorText)
+        console.error(`Failed to update ${type} application status:`, errorText)
         toast({
           title: "Update Failed",
-          description: "Failed to update application status. Please try again.",
+          description: `Failed to update ${type} application status. Please try again.`,
           variant: "destructive",
         })
       }
     } catch (error) {
-      console.error("Error updating application status:", error)
+      console.error(`Error updating ${type} application status:`, error)
       toast({
         title: "Update Error",
         description: "An error occurred while updating the status.",
@@ -99,7 +128,13 @@ export function ApplicationStatusProvider({ children }: { children: ReactNode })
 
   return (
     <ApplicationStatusContext.Provider
-      value={{ isApplicationOpen, setApplicationOpen, lastUpdated, isLoading, refreshStatus }}
+      value={{
+        regularStatus,
+        moderatorStatus,
+        setApplicationStatus,
+        isLoading,
+        refreshStatus,
+      }}
     >
       {children}
     </ApplicationStatusContext.Provider>

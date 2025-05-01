@@ -5,6 +5,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import Navbar from "@/components/navbar"
 import { ApplicationStatusProvider } from "@/context/application-status-context"
+import { AdminStatusProvider } from "@/context/admin-status-context"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -24,8 +25,10 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <ApplicationStatusProvider>
-            <Navbar />
-            {children}
+            <AdminStatusProvider>
+              <Navbar />
+              {children}
+            </AdminStatusProvider>
           </ApplicationStatusProvider>
         </ThemeProvider>
       </body>
