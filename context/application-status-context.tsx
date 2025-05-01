@@ -1,12 +1,14 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { toast } from "@/components/ui/use-toast"
 
 type ApplicationStatusContextType = {
   isApplicationOpen: boolean
   setApplicationOpen: (isOpen: boolean) => void
   lastUpdated: string | null
   isLoading: boolean
+  refreshStatus: () => Promise<void>
 }
 
 const ApplicationStatusContext = createContext<ApplicationStatusContextType | undefined>(undefined)
@@ -15,23 +17,29 @@ export function ApplicationStatusProvider({ children }: { children: ReactNode })
   const [isApplicationOpen, setIsApplicationOpen] = useState(true)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [lastChecked, setLastChecked] = useState(0)
 
   // Function to fetch the current status from the API
   const fetchStatus = async () => {
     try {
+      setIsLoading(true)
       const response = await fetch("/api/application-status")
       if (response.ok) {
         const data = await response.json()
         setIsApplicationOpen(data.isOpen)
         setLastUpdated(data.lastUpdated)
+      } else {
+        console.error("Failed to fetch application status:", await response.text())
       }
     } catch (error) {
       console.error("Error fetching application status:", error)
     } finally {
       setIsLoading(false)
-      setLastChecked(Date.now())
     }
+  }
+
+  // Expose refresh function to components
+  const refreshStatus = async () => {
+    await fetchStatus()
   }
 
   // Initial fetch on component mount
@@ -64,20 +72,35 @@ export function ApplicationStatusProvider({ children }: { children: ReactNode })
         const data = await response.json()
         setIsApplicationOpen(data.isOpen)
         setLastUpdated(data.lastUpdated)
+        toast({
+          title: "Status Updated",
+          description: `Applications are now ${isOpen ? "open" : "closed"}.`,
+        })
       } else {
-        // If API call fails, revert to previous state
-        console.error("Failed to update application status")
+        const errorText = await response.text()
+        console.error("Failed to update application status:", errorText)
+        toast({
+          title: "Update Failed",
+          description: "Failed to update application status. Please try again.",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error("Error updating application status:", error)
+      toast({
+        title: "Update Error",
+        description: "An error occurred while updating the status.",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
-      setLastChecked(Date.now())
     }
   }
 
   return (
-    <ApplicationStatusContext.Provider value={{ isApplicationOpen, setApplicationOpen, lastUpdated, isLoading }}>
+    <ApplicationStatusContext.Provider
+      value={{ isApplicationOpen, setApplicationOpen, lastUpdated, isLoading, refreshStatus }}
+    >
       {children}
     </ApplicationStatusContext.Provider>
   )

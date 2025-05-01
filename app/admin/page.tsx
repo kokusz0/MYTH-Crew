@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { useApplicationStatus } from "@/context/application-status-context"
 import { Shield, LogOut, RefreshCw } from "lucide-react"
+import { toast } from "@/components/ui/use-toast"
+import { Toaster } from "@/components/ui/toaster"
 
 export default function AdminPage() {
   const router = useRouter()
-  const { isApplicationOpen, setApplicationOpen, lastUpdated, isLoading } = useApplicationStatus()
+  const { isApplicationOpen, setApplicationOpen, lastUpdated, isLoading, refreshStatus } = useApplicationStatus()
   const [isAuthorized, setIsAuthorized] = useState(false)
   const [adminUser, setAdminUser] = useState("")
   const [refreshing, setRefreshing] = useState(false)
@@ -27,8 +29,12 @@ export default function AdminPage() {
     }
   }, [router])
 
-  const toggleApplicationStatus = () => {
-    setApplicationOpen(!isApplicationOpen)
+  const toggleApplicationStatus = async () => {
+    try {
+      await setApplicationOpen(!isApplicationOpen)
+    } catch (error) {
+      console.error("Error toggling status:", error)
+    }
   }
 
   const formatDate = (dateString: string | null) => {
@@ -40,12 +46,18 @@ export default function AdminPage() {
   const manualRefresh = async () => {
     setRefreshing(true)
     try {
-      const response = await fetch("/api/application-status")
-      if (response.ok) {
-        window.location.reload()
-      }
+      await refreshStatus()
+      toast({
+        title: "Status Refreshed",
+        description: "Application status has been refreshed.",
+      })
     } catch (error) {
       console.error("Error refreshing status:", error)
+      toast({
+        title: "Refresh Failed",
+        description: "Failed to refresh application status.",
+        variant: "destructive",
+      })
     } finally {
       setRefreshing(false)
     }
@@ -105,9 +117,9 @@ export default function AdminPage() {
                 size="sm"
                 className="flex items-center gap-1"
                 onClick={manualRefresh}
-                disabled={refreshing}
+                disabled={refreshing || isLoading}
               >
-                <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
+                <RefreshCw size={14} className={refreshing || isLoading ? "animate-spin" : ""} />
                 Refresh
               </Button>
             </div>
@@ -131,6 +143,7 @@ export default function AdminPage() {
           </section>
         </div>
       </div>
+      <Toaster />
     </main>
   )
 }

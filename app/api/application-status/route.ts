@@ -1,36 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server"
-import fs from "fs"
-import path from "path"
 
-// Path to the status file
-const statusFilePath = path.join(process.cwd(), "application-status.json")
-
-// Initialize the status file if it doesn't exist
-function initStatusFile() {
-  if (!fs.existsSync(statusFilePath)) {
-    fs.writeFileSync(statusFilePath, JSON.stringify({ isOpen: true, lastUpdated: new Date().toISOString() }))
-  }
-}
-
-// Get the current status
-function getStatus() {
-  initStatusFile()
-  const statusData = fs.readFileSync(statusFilePath, "utf-8")
-  return JSON.parse(statusData)
-}
-
-// Update the status
-function updateStatus(isOpen: boolean) {
-  const newStatus = { isOpen, lastUpdated: new Date().toISOString() }
-  fs.writeFileSync(statusFilePath, JSON.stringify(newStatus))
-  return newStatus
+// In-memory storage (this will reset on server restart, but works for demo purposes)
+let applicationStatus = {
+  isOpen: true,
+  lastUpdated: new Date().toISOString(),
 }
 
 // GET endpoint to retrieve the current status
 export async function GET() {
   try {
-    const status = getStatus()
-    return NextResponse.json(status)
+    return NextResponse.json(applicationStatus)
   } catch (error) {
     console.error("Error getting application status:", error)
     return NextResponse.json({ isOpen: true, error: "Failed to get status" }, { status: 500 })
@@ -47,8 +26,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid status value" }, { status: 400 })
     }
 
-    const newStatus = updateStatus(isOpen)
-    return NextResponse.json(newStatus)
+    // Update the status
+    applicationStatus = {
+      isOpen,
+      lastUpdated: new Date().toISOString(),
+    }
+
+    return NextResponse.json(applicationStatus)
   } catch (error) {
     console.error("Error updating application status:", error)
     return NextResponse.json({ error: "Failed to update status" }, { status: 500 })

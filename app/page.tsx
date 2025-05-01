@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import LeadershipSection from "@/components/leadership-section"
 import ApplicationStatus from "@/components/application-status"
 import { useApplicationStatus } from "@/context/application-status-context"
+import { Toaster } from "@/components/ui/toaster"
 
 export default function Home() {
   const { isApplicationOpen } = useApplicationStatus()
@@ -37,6 +38,7 @@ export default function Home() {
       </div>
 
       <LeadershipSection />
+      <Toaster />
     </main>
   )
 }
