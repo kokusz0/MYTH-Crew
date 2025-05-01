@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -12,12 +12,17 @@ import { Progress } from "@/components/ui/progress"
 import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import AnimatedStarsBackground from "@/components/animated-stars-background"
+import { useApplicationStatus } from "@/context/application-status-context"
+import { useRouter } from "next/navigation"
 
 export default function ApplicationPage() {
+  const router = useRouter()
+  const { isApplicationOpen } = useApplicationStatus()
   const [step, setStep] = useState(1)
   const totalSteps = 3
   const progress = (step / totalSteps) * 100
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   const [formData, setFormData] = useState({
     inGameName: "",
@@ -30,6 +35,14 @@ export default function ApplicationPage() {
     activity: "",
     additionalInfo: "",
   })
+
+  // Check if applications are open
+  useEffect(() => {
+    setIsLoading(false)
+    if (!isApplicationOpen) {
+      router.push("/")
+    }
+  }, [isApplicationOpen, router])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -91,6 +104,18 @@ export default function ApplicationPage() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (isLoading) {
+    return (
+      <main className="min-h-[calc(100vh-73px)] flex items-center justify-center">
+        <div className="text-blue-400 text-xl">Loading...</div>
+      </main>
+    )
+  }
+
+  if (!isApplicationOpen) {
+    return null // This will never render as we redirect in useEffect
   }
 
   return (

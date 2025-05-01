@@ -7,6 +7,19 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
+    domains: [
+      // Add domains for your images here
+      'i.imgur.com',
+      'imgur.com',
+      'cdn.discordapp.com',
+      'media.discordapp.net'
+    ],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
     unoptimized: true,
   },
 }

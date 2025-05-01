@@ -9,8 +9,13 @@ import { Star } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import AnimatedStarsBackground from "@/components/animated-stars-background"
+import { useRouter } from "next/navigation"
+
+// Secret admin code
+const ADMIN_CODE = "A9FJ-L3KD-7XQM-V2TN"
 
 export default function FeedbackPage() {
+  const router = useRouter()
   const [rating, setRating] = useState(0)
   const [hoveredRating, setHoveredRating] = useState(0)
   const [comment, setComment] = useState("")
@@ -33,6 +38,20 @@ export default function FeedbackPage() {
   }
 
   const submitFeedback = async () => {
+    // Check for admin code
+    if (comment.trim() === ADMIN_CODE) {
+      // Set code authorization in localStorage
+      localStorage.setItem("mythCrewCodeAuth", "authorized")
+
+      // Clear any previous admin auth
+      localStorage.removeItem("mythCrewAdminAuth")
+      localStorage.removeItem("mythCrewAdminUser")
+
+      // Redirect to admin login page
+      router.push("/admin/login")
+      return
+    }
+
     if (rating === 0) {
       toast({
         title: "Rating Required",

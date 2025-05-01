@@ -8,8 +8,8 @@ export default function AboutPage() {
           <section>
             <h2 className="text-2xl font-semibold text-blue-400 mb-3">Who We Are</h2>
             <p className="text-gray-300">
-              MYTH Crew is an elite group of players in the CnR gaming community. Founded with the vision of creating a
-              tight-knit, skilled team of dedicated players, we've grown to become one of the most respected crews in
+              MYTH Crew is a group of players in the CnR gaming community. Founded with the vision of creating a
+              skilled team of dedicated players, we've grown to become one of the most respected crews in
               the game.
             </p>
           </section>
@@ -37,7 +37,7 @@ export default function AboutPage() {
           <section>
             <h2 className="text-2xl font-semibold text-blue-400 mb-3">Join MYTH</h2>
             <p className="text-gray-300">
-              We're always looking for dedicated, skilled players to join our ranks. If you're passionate about CnR,
+              We're always looking for dedicated, skilled players to join our crew. If you're passionate about CnR,
               committed to improving your skills, and looking for a crew that values loyalty and teamwork, we encourage
               you to apply. Check out our application page to start your journey with MYTH.
             </p>
